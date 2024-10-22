@@ -1,14 +1,14 @@
 # Satellite Images Semantic Segmentation
 
-This repository contains code for a machine learning project that performs semantic segmentation on aerial imagery using U-Net architecture. The project aims to accurately segment different classes in aerial images.
+This repository contains code for a deep learning project that performs semantic segmentation on satellite imagery using U-Net architecture. The project aims to accurately segment different classes in satellite images.
 
 ## Project Overview
 
 The project involves:
 
-- Preprocessing and analyzing aerial imagery data.
+- Preprocessing and analyzing the satellite imagery data.
 - Implementing U-Net architecture for semantic segmentation.
-- Training and evaluating the model on various aerial images.
+- Training and evaluating the model on various aerial images using various metrics.
 - Visualizing segmentation results and model performance.
 
 ## Repository Structure
