@@ -25,7 +25,7 @@ The dataset is available on Kaggle: [Semantic Segmentation of Aerial Imagery](ht
 
 ### Dataset Description
 
-The dataset consists of various aerial images that require semantic segmentation into different classes. Each image is labeled for training purposes to enable accurate segmentation by the model.
+The dataset consists of satellite images obtained from Mohammed Bin Rashid Space Center in Dubai by  MBRSC satellites and annotated with pixel-wise semantic segmentation in 6 classes (Building, Land, Road, Vegetation, Water and Unlabeled) that require semantic segmentation. Each image is labeled for training purposes to enable accurate segmentation by the model.
 
 ## Installation
 
