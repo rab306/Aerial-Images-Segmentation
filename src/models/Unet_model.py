@@ -116,4 +116,3 @@ def compile_model():
     model.compile(optimizer=Adam(learning_rate=1e-4), loss=loss_func, metrics=evaluation_metrics())
 
     return model
-
