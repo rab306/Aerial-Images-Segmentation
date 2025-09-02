@@ -8,7 +8,7 @@ class Config:
         
         # Training settings
         self.batch_size = 32
-        self.epochs = 150
+        self.epochs = 500
         self.verbose = 1
         self.seed = 42
         self.smooth = 1e-8
@@ -20,6 +20,11 @@ class Config:
         # File paths
         self.checkpoint_path = 'Unet.weights.h5'
         self.model_path = 'Unet_model.h5'
+
+        # Metrics settings
+        self.primary_monitor_metric = 'val_jaccard_coeff'
+        self.secondary_monitor_metric = 'val_mean_iou'  
+        self.patience = 100
         
         # Class information
         self.class_colors_hex = {
