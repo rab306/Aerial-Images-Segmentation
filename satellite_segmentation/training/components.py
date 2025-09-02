@@ -1,8 +1,8 @@
 import tensorflow as tf
 from keras.metrics import OneHotIoU, Recall, Precision
 from keras.losses import CategoricalFocalCrossentropy, Dice
-from keras.callbacks import ModelCheckpoint
-from src.config import Config
+from keras.callbacks import ModelCheckpoint, EarlyStopping
+from satellite_segmentation.config.settings import Config
 
 class Evaluator:
     def __init__(self, config: Config):
@@ -32,7 +32,7 @@ class LossCalculator:
         self.config = config
         # Configure once, use many times
         self.focal_loss = CategoricalFocalCrossentropy(
-            alpha=config.focal_alpha,  # From your config!
+            alpha=config.focal_alpha,  
             gamma=config.focal_gamma
         )
         self.dice_loss = Dice()
@@ -49,30 +49,39 @@ class LossCalculator:
     def dice_only(self, ground_truth, prediction):
         return self.dice_loss(ground_truth, prediction)
 
+class CallbacksManager:
+    def __init__(self, config: Config):
+        self.config = config
+        self.checkpoint_path = config.checkpoint_path
+        self.model_path = config.model_path
+        self.primary_metric = config.primary_monitor_metric 
+        self.patience = config.patience
 
-# Callbacks
-def callbacks(checkpoint_path):
-    """
-    Creates a list of callbacks to be used during model training.
-
-    Args:
-        checkpoint_path (str): Path to save the model checkpoint.
-
-    Returns:
-        list: List of Keras callbacks.
-    """
-
-    callback_lst = []
-
-    check_point = ModelCheckpoint(
-        checkpoint_path,
-        monitor='val_jaccard_coeff',
-        save_weights_only=True,
-        save_best_only=True,
-        mode='max',
-        verbose=1
-    )
-    callback_lst.append(check_point)
-    return callback_lst
-
+    def get_checkpoint_callback(self):
+        checkpt = ModelCheckpoint(
+            self.checkpoint_path,
+            monitor=self.primary_metric,  
+            mode='max',
+            save_weights_only=True,
+            save_best_only=True,
+            verbose=1
+        )
+        return checkpt
+    
+    def get_early_stopping_callback(self):  
+        stop_point = EarlyStopping(
+            patience=self.patience,  
+            monitor=self.primary_metric,  
+            restore_best_weights=True,
+            verbose=1
+        )
+        return stop_point
+    
+    def get_all_callbacks(self):
+        return [
+            self.get_checkpoint_callback(),
+            self.get_early_stopping_callback()
+        ]
+        
+        
 
