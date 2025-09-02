@@ -5,7 +5,7 @@ __pycache__/
 *.pyd
 
 # Virtual environment
-semantic_seg_venv/
+segment-venv
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
