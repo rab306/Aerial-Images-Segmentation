@@ -11,7 +11,7 @@ seg-venv
 .ipynb_checkpoints/
 
 # Data files
-data/
+raw_data/
 saved_model/
 
 # Any other files you might want to ignore
