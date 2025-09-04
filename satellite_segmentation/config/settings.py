@@ -1,7 +1,7 @@
 class Config:
     def __init__(self):
         # Data settings
-        self.directory = 'Satellite Images Semantic Segmentation/data/raw/'
+        self.directory = "raw_data/raw/"
         self.patch_size = 256
         self.num_channels = 3
         self.num_classes = 6
