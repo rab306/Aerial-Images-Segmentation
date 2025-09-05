@@ -2,7 +2,7 @@ import tensorflow as tf
 from keras.metrics import OneHotIoU, Recall, Precision
 from keras.losses import CategoricalFocalCrossentropy, Dice
 from keras.callbacks import ModelCheckpoint, EarlyStopping
-from satellite_segmentation.config.settings import Config
+from src.config.settings import Config
 
 class Evaluator:
     def __init__(self, config: Config):

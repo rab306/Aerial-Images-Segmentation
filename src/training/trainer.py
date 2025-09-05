@@ -3,10 +3,10 @@ from typing import Tuple, Optional, Dict, Any
 from keras.models import Model
 from keras.callbacks import History
 
-from satellite_segmentation.config.settings import Config
-from satellite_segmentation.models.factory import ModelFactory
-from satellite_segmentation.training.pipeline import TrainingDataPipeline
-from satellite_segmentation.training.components import CallbacksManager
+from src.config.settings import Config
+from src.models.factory import ModelFactory
+from src.training.pipeline import TrainingDataPipeline
+from src.training.components import CallbacksManager
 
 
 class ModelTrainer:

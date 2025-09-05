@@ -1,4 +1,4 @@
-from satellite_segmentation.config.settings import Config
+from src.config.settings import Config
 from pathlib import Path
 import cv2
 import json

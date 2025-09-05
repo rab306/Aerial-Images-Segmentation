@@ -63,7 +63,7 @@ class BaseSegmentationModel(ABC):
             compile_params.update(custom_params)
         
         # Import components from your training module
-        from satellite_segmentation.training.components import LossCalculator, Evaluator
+        from src.training.components import LossCalculator, Evaluator
         
         loss_calc = LossCalculator(config)
         evaluator = Evaluator(config)

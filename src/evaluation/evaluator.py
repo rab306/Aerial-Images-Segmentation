@@ -2,8 +2,8 @@ import numpy as np
 from typing import Dict, List, Tuple, Optional
 from keras.models import Model
 
-from satellite_segmentation.config.settings import Config
-from satellite_segmentation.training.pipeline import TrainingDataPipeline
+from src.config.settings import Config
+from src.training.pipeline import TrainingDataPipeline
 
 
 class ModelEvaluator:

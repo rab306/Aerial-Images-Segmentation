@@ -2,9 +2,9 @@ import numpy as np
 from typing import Tuple, List
 from sklearn.model_selection import train_test_split
 
-from satellite_segmentation.config.settings import Config
-from satellite_segmentation.data.loaders import DataLoader
-from satellite_segmentation.data.preprocessors import ImagePreprocessor, MaskPreprocessor
+from src.config.settings import Config
+from src.data.loaders import DataLoader
+from src.data.preprocessors import ImagePreprocessor, MaskPreprocessor
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 

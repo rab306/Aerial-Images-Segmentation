@@ -6,7 +6,7 @@ from keras.layers import (
 from keras.optimizers import Adam
 from typing import Dict, Any
 
-from satellite_segmentation.models.base import BaseSegmentationModel
+from src.models.base import BaseSegmentationModel
 
 
 class UNetModel(BaseSegmentationModel):

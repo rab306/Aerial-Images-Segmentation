@@ -1,8 +1,8 @@
 from typing import Dict, Type, List
 from keras.models import Model
 
-from satellite_segmentation.models.base import BaseSegmentationModel
-from satellite_segmentation.models.architectures.Unet import UNetModel
+from src.models.base import BaseSegmentationModel
+from src.models.architectures.Unet import UNetModel
 
 
 class ModelFactory:
