@@ -1,3 +1,5 @@
+# src/config/settings.py
+
 from pathlib import Path
 from typing import Dict
 
@@ -42,8 +44,28 @@ class DataSplitConfig:
             raise ValueError(f"Data splits must sum to 1.0, got {total}")
 
 
+class PathsConfig:
+    """Configuration for file and directory paths."""
+    
+    def __init__(self):
+        self.models_dir = Path("models")
+        self.checkpoints_dir = Path("checkpoints")
+        self.logs_dir = Path("logs")
+        self.results_dir = Path("results")
+        self.plots_dir = Path("plots")
+        
+        # Create directories if they don't exist
+        self.create_directories()
+    
+    def create_directories(self):
+        """Create all configured directories."""
+        for path in [self.models_dir, self.checkpoints_dir, self.logs_dir, 
+                     self.results_dir, self.plots_dir]:
+            path.mkdir(parents=True, exist_ok=True)
+
+
 class Config:
-    """Main configuration class for the satellite segmentation project."""
+    """Main configuration class for the aerial images segmentation project."""
     
     def __init__(self):
         # Data settings
@@ -63,7 +85,7 @@ class Config:
         self.focal_alpha = 0.5
         self.focal_gamma = 1.0
         
-        # File paths
+        # Legacy file paths (for backward compatibility)
         self.checkpoint_path = 'Unet.weights.h5'
         self.model_path = 'Unet_model.h5'
 
@@ -85,6 +107,7 @@ class Config:
         # Nested configurations
         self.augmentation = AugmentationConfig()
         self.data_splits = DataSplitConfig()
+        self.paths = PathsConfig()
         
         # Validate configuration
         self._validate_config()
@@ -120,6 +143,16 @@ class Config:
             raise ValueError(f"Unknown class name: {class_name}")
         return class_names.index(class_name)
     
+    def get_model_filename(self, epoch: int = None, model_type: str = "unet") -> str:
+        """Generate model filename with optional epoch and model type."""
+        if epoch is not None:
+            return f"{model_type}_model_epoch_{epoch:03d}.h5"
+        return f"{model_type}_model.h5"
+    
+    def get_checkpoint_filename(self, model_type: str = "unet") -> str:
+        """Generate checkpoint filename."""
+        return f"{model_type}_weights.h5"
+    
     def print_summary(self):
         """Print configuration summary."""
         print("=== Configuration Summary ===")
@@ -132,3 +165,5 @@ class Config:
         print(f"Data splits: Train={self.data_splits.train_split}, "
               f"Val={self.data_splits.val_split}, Test={self.data_splits.test_split}")
         print(f"Augmentation enabled: {self.augmentation.rotation_range > 0}")
+        print(f"Models directory: {self.paths.models_dir}")
+        print(f"Checkpoints directory: {self.paths.checkpoints_dir}")
