@@ -1,7 +1,7 @@
 # src/config/settings.py
 
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 
 class AugmentationConfig:
@@ -47,29 +47,44 @@ class DataSplitConfig:
 class PathsConfig:
     """Configuration for file and directory paths."""
     
-    def __init__(self):
-        self.models_dir = Path("models")
-        self.checkpoints_dir = Path("checkpoints")
-        self.logs_dir = Path("logs")
-        self.results_dir = Path("results")
-        self.plots_dir = Path("plots")
+    def __init__(self, output_dir: Optional[str] = None):
+        # Use provided output directory or default
+        base_dir = Path(output_dir) if output_dir else Path("output")
         
-        # Create directories if they don't exist
+        self.models_dir = base_dir / "models"
+        self.checkpoints_dir = base_dir / "checkpoints"
+        self.logs_dir = base_dir / "logs"
+        self.results_dir = base_dir / "results"
+        self.plots_dir = base_dir / "plots"
+        
+        # Store base directory for reference
+        self.output_base = base_dir
+        
+        # Create directories
         self.create_directories()
     
     def create_directories(self):
         """Create all configured directories."""
-        for path in [self.models_dir, self.checkpoints_dir, self.logs_dir, 
-                     self.results_dir, self.plots_dir]:
-            path.mkdir(parents=True, exist_ok=True)
+        directories = [
+            self.models_dir, 
+            self.checkpoints_dir, 
+            self.logs_dir,
+            self.results_dir, 
+            self.plots_dir
+        ]
+        
+        for directory in directories:
+            directory.mkdir(parents=True, exist_ok=True)
+            
+        print(f"Created output directories under: {self.output_base}")
 
 
 class Config:
     """Main configuration class for the aerial images segmentation project."""
     
-    def __init__(self):
-        # Data settings
-        self.directory = "raw_data/raw/"
+    def __init__(self, data_dir: Optional[str] = None, output_dir: Optional[str] = None):
+        # Data settings - use provided or default
+        self.directory = data_dir or "raw_data/raw/"
         self.patch_size = 256
         self.num_channels = 3
         self.num_classes = 6
@@ -107,7 +122,7 @@ class Config:
         # Nested configurations
         self.augmentation = AugmentationConfig()
         self.data_splits = DataSplitConfig()
-        self.paths = PathsConfig()
+        self.paths = PathsConfig(output_dir)
         
         # Validate configuration
         self._validate_config()
@@ -127,10 +142,34 @@ class Config:
         # Validate data splits
         self.data_splits.validate_splits()
         
-        # Validate directory exists
+        # Validate data directory
+        self._validate_data_directory()
+    
+    def _validate_data_directory(self):
+        """Validate that data directory exists and has required structure."""
         data_path = Path(self.directory)
+        
         if not data_path.exists():
-            print(f"Warning: Data directory does not exist: {data_path}")
+            raise ValueError(f"Data directory does not exist: {data_path}")
+        
+        # Check for Tile directories
+        tile_dirs = [d for d in data_path.iterdir() 
+                    if d.is_dir() and d.name.startswith('Tile')]
+        
+        if not tile_dirs:
+            raise ValueError(f"No 'Tile' directories found in: {data_path}")
+        
+        print(f"Found {len(tile_dirs)} Tile directories: {[d.name for d in sorted(tile_dirs)]}")
+        
+        # Validate that each Tile has images and masks directories
+        for tile_dir in tile_dirs:
+            images_dir = tile_dir / "images"
+            masks_dir = tile_dir / "masks"
+            
+            if not images_dir.exists():
+                raise ValueError(f"Missing 'images' directory in {tile_dir}")
+            if not masks_dir.exists():
+                raise ValueError(f"Missing 'masks' directory in {tile_dir}")
     
     def get_class_names(self):
         """Get list of class names in order."""
@@ -157,6 +196,7 @@ class Config:
         """Print configuration summary."""
         print("=== Configuration Summary ===")
         print(f"Data directory: {self.directory}")
+        print(f"Output directory: {self.paths.output_base}")
         print(f"Patch size: {self.patch_size}")
         print(f"Batch size: {self.batch_size}")
         print(f"Epochs: {self.epochs}")
@@ -165,5 +205,5 @@ class Config:
         print(f"Data splits: Train={self.data_splits.train_split}, "
               f"Val={self.data_splits.val_split}, Test={self.data_splits.test_split}")
         print(f"Augmentation enabled: {self.augmentation.rotation_range > 0}")
-        print(f"Models directory: {self.paths.models_dir}")
-        print(f"Checkpoints directory: {self.paths.checkpoints_dir}")
+        print(f"Models will be saved to: {self.paths.models_dir}")
+        print(f"Checkpoints will be saved to: {self.paths.checkpoints_dir}")

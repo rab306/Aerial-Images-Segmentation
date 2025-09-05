@@ -73,6 +73,7 @@ class CallbacksManager:
             patience=self.patience,  
             monitor=self.primary_metric,  
             restore_best_weights=True,
+            mode='max',
             verbose=1
         )
         return stop_point

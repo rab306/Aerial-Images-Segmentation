@@ -216,23 +216,13 @@ class TrainingDataPipeline:
         )
     
     def _process_split(self, indices: List[int], split_name: str) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Process a specific data split.
-        
-        Args:
-            indices: Sample indices to process
-            split_name: Name of split for logging
-            
-        Returns:
-            Tuple of (image_patches, mask_patches)
-        """
         image_patches = []
         mask_patches = []
         
         print(f"Processing {split_name.lower()} data: {len(indices)} samples...")
         
         for i, sample_idx in enumerate(indices):
-            if i % 10 == 0:  # Progress indicator
+            if i % 10 == 0:
                 print(f"  {split_name} progress: {i}/{len(indices)} samples")
             
             # Load raw sample
@@ -240,16 +230,16 @@ class TrainingDataPipeline:
             
             # Process to patches
             img_patches = self.img_processor.process_image_to_patches(raw_img)
-            mask_patches = self.mask_processor.process_mask_to_patches(raw_mask)
+            sample_mask_patches = self.mask_processor.process_mask_to_patches(raw_mask)  # Rename to avoid confusion
             
             # Verify patch count matches
-            if len(img_patches) != len(mask_patches):
+            if len(img_patches) != len(sample_mask_patches):
                 raise ValueError(f"Patch count mismatch for sample {sample_idx}: "
-                               f"{len(img_patches)} image patches vs {len(mask_patches)} mask patches")
+                            f"{len(img_patches)} image patches vs {len(sample_mask_patches)} mask patches")
             
             # Collect patches
             image_patches.extend(img_patches)
-            mask_patches.extend(mask_patches)
+            mask_patches.extend(sample_mask_patches)  # Fixed: extend with the new sample patches
         
         print(f"{split_name} processing complete: {len(image_patches)} total patches")
         
