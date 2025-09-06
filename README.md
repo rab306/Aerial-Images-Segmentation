@@ -13,7 +13,6 @@ A deep learning project for semantic segmentation of aerial imagery using U-Net 
 - [Inference](#inference)
 - [Configuration](#configuration)
 - [Results](#results)
-- [Contributing](#contributing)
 
 ## Features
 
