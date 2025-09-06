@@ -1,7 +1,7 @@
-# src/config/settings.py
-
 from pathlib import Path
 from typing import Dict, Optional
+import json
+from datetime import datetime
 
 
 class AugmentationConfig:
@@ -51,14 +51,16 @@ class PathsConfig:
         # Use provided output directory or default
         base_dir = Path(output_dir) if output_dir else Path("output")
         
+        # Directory structure
         self.models_dir = base_dir / "models"
-        self.checkpoints_dir = base_dir / "checkpoints"
+        self.checkpoints_dir = base_dir / "checkpoints" 
         self.logs_dir = base_dir / "logs"
         self.results_dir = base_dir / "results"
         self.plots_dir = base_dir / "plots"
         
-        # Store base directory for reference
+        # Store base directory and data directory for reference
         self.output_base = base_dir
+        self.data_base = None  # Set later in Config.__init__
         
         # Create directories
         self.create_directories()
@@ -77,6 +79,33 @@ class PathsConfig:
             directory.mkdir(parents=True, exist_ok=True)
             
         print(f"Created output directories under: {self.output_base}")
+    
+    def get_model_path(self, model_name: str = "unet", epoch: Optional[int] = None) -> Path:
+        """Get full path for model file."""
+        if epoch is not None:
+            filename = f"{model_name}_epoch_{epoch:03d}.h5"
+        else:
+            filename = f"{model_name}_model.h5"
+        return self.models_dir / filename
+    
+    def get_checkpoint_path(self, model_name: str = "unet") -> Path:
+        """Get full path for checkpoint file."""
+        # Use Keras naming convention with dot separator
+        filename = f"{model_name.capitalize()}.weights.h5"
+        return self.checkpoints_dir / filename
+    
+    def get_tensorboard_log_dir(self, model_name: str = "unet") -> Path:
+        """Get TensorBoard log directory."""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        return self.logs_dir / f"{model_name}_{timestamp}"
+    
+    def get_training_plot_path(self, plot_name: str) -> Path:
+        """Get path for training plots."""
+        return self.plots_dir / f"{plot_name}.png"
+    
+    def get_evaluation_results_path(self, dataset_name: str = "test") -> Path:
+        """Get path for evaluation results."""
+        return self.results_dir / f"evaluation_{dataset_name}.json"
 
 
 class Config:
@@ -99,10 +128,6 @@ class Config:
         # Loss function parameters 
         self.focal_alpha = 0.5
         self.focal_gamma = 1.0
-        
-        # Legacy file paths (for backward compatibility)
-        self.checkpoint_path = 'Unet.weights.h5'
-        self.model_path = 'Unet_model.h5'
 
         # Metrics settings
         self.primary_monitor_metric = 'val_jaccard_coeff'
@@ -123,6 +148,9 @@ class Config:
         self.augmentation = AugmentationConfig()
         self.data_splits = DataSplitConfig()
         self.paths = PathsConfig(output_dir)
+        
+        # Set data base path for validation
+        self.paths.data_base = Path(self.directory)
         
         # Validate configuration
         self._validate_config()
@@ -182,15 +210,55 @@ class Config:
             raise ValueError(f"Unknown class name: {class_name}")
         return class_names.index(class_name)
     
-    def get_model_filename(self, epoch: int = None, model_type: str = "unet") -> str:
-        """Generate model filename with optional epoch and model type."""
-        if epoch is not None:
-            return f"{model_type}_model_epoch_{epoch:03d}.h5"
-        return f"{model_type}_model.h5"
+    def save_config(self, filepath: Optional[str] = None) -> Path:
+        """Save configuration to JSON file."""
+        if filepath is None:
+            filepath = self.paths.output_base / "config.json"
+        else:
+            filepath = Path(filepath)
+        
+        config_dict = {
+            'data_directory': str(self.directory),
+            'patch_size': self.patch_size,
+            'num_channels': self.num_channels,
+            'num_classes': self.num_classes,
+            'batch_size': self.batch_size,
+            'epochs': self.epochs,
+            'class_names': self.get_class_names(),
+            'class_colors': self.class_colors_hex,
+            'data_splits': {
+                'train': self.data_splits.train_split,
+                'val': self.data_splits.val_split,
+                'test': self.data_splits.test_split
+            },
+            'augmentation': self.augmentation.to_dict(),
+            'created_at': datetime.now().isoformat()
+        }
+        
+        with open(filepath, 'w') as f:
+            json.dump(config_dict, f, indent=2)
+        
+        print(f"Configuration saved to: {filepath}")
+        return filepath
     
-    def get_checkpoint_filename(self, model_type: str = "unet") -> str:
-        """Generate checkpoint filename."""
-        return f"{model_type}_weights.h5"
+    @classmethod
+    def load_from_file(cls, filepath: str) -> 'Config':
+        """Load configuration from JSON file."""
+        with open(filepath, 'r') as f:
+            config_dict = json.load(f)
+        
+        # Create new config with basic parameters
+        config = cls(
+            data_dir=config_dict['data_directory'],
+            output_dir=None  # Will use default
+        )
+        
+        # Override with saved values
+        config.patch_size = config_dict['patch_size']
+        config.batch_size = config_dict['batch_size']
+        config.epochs = config_dict['epochs']
+        
+        return config
     
     def print_summary(self):
         """Print configuration summary."""

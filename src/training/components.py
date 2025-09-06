@@ -1,8 +1,9 @@
 import tensorflow as tf
 from keras.metrics import OneHotIoU, Recall, Precision
 from keras.losses import CategoricalFocalCrossentropy, Dice
-from keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard
 from src.config.settings import Config
+from typing import List
 
 class Evaluator:
     def __init__(self, config: Config):
@@ -49,17 +50,21 @@ class LossCalculator:
     def dice_only(self, ground_truth, prediction):
         return self.dice_loss(ground_truth, prediction)
 
+
 class CallbacksManager:
+    """Manages training callbacks for model training."""
+    
     def __init__(self, config: Config):
         self.config = config
-        self.checkpoint_path = config.checkpoint_path
-        self.model_path = config.model_path
         self.primary_metric = config.primary_monitor_metric 
         self.patience = config.patience
 
-    def get_checkpoint_callback(self):
+    def get_checkpoint_callback(self, model_type: str = "unet"):
+        """Get ModelCheckpoint callback using proper config paths."""
+        checkpoint_path = self.config.paths.get_checkpoint_path(model_type)
+        
         checkpt = ModelCheckpoint(
-            self.checkpoint_path,
+            str(checkpoint_path),  # Use the proper path from config
             monitor=self.primary_metric,  
             mode='max',
             save_weights_only=True,
@@ -69,6 +74,7 @@ class CallbacksManager:
         return checkpt
     
     def get_early_stopping_callback(self):  
+        """Get EarlyStopping callback."""
         stop_point = EarlyStopping(
             patience=self.patience,  
             monitor=self.primary_metric,  
@@ -78,11 +84,24 @@ class CallbacksManager:
         )
         return stop_point
     
-    def get_all_callbacks(self):
+    def get_tensorboard_callback(self, model_type: str = "unet"):
+        """Get TensorBoard callback for logging training metrics."""
+        log_dir = self.config.paths.get_tensorboard_log_dir(model_type)
+        
+        tensorboard = TensorBoard(
+            log_dir=str(log_dir),
+            histogram_freq=1,           # Log weight histograms every epoch
+            write_graph=True,           # Log model graph
+            write_images=True,          # Log model weights as images
+            update_freq='epoch',        # Log metrics every epoch
+            profile_batch=0             # Disable profiling for performance
+        )
+        return tensorboard
+    
+    def get_all_callbacks(self, model_type: str = "unet") -> List:
+        """Get all configured callbacks for training."""
         return [
-            self.get_checkpoint_callback(),
-            self.get_early_stopping_callback()
+            self.get_checkpoint_callback(model_type),
+            self.get_early_stopping_callback(),
+            self.get_tensorboard_callback(model_type)
         ]
-        
-        
-
