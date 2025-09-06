@@ -11,6 +11,7 @@ seg-venv
 .ipynb_checkpoints/
 
 # Data files
+*results/
 raw_data/
 requirements-full.txt
 
