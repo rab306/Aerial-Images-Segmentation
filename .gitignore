@@ -12,7 +12,7 @@ seg-venv
 
 # Data files
 raw_data/
-saved_model/
+requirements_full.txt
 
 # Any other files you might want to ignore
 *.log
