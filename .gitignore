@@ -12,7 +12,7 @@ seg-venv
 
 # Data files
 *results/
-raw_data/
+data/
 requirements-full.txt
 
 # Any other files you might want to ignore
