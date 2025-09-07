@@ -111,7 +111,7 @@ class PathsConfig:
 class Config:
     """Main configuration class for the aerial images segmentation project."""
     
-    def __init__(self, data_dir: Optional[str] = None, output_dir: Optional[str] = None):
+    def __init__(self, data_dir: Optional[str] = None, output_dir: Optional[str] = None, inference_mode: bool = False):
         # Data settings - use provided or default
         self.directory = data_dir or "raw_data/raw/"
         self.patch_size = 256
@@ -152,6 +152,9 @@ class Config:
         # Set data base path for validation
         self.paths.data_base = Path(self.directory)
         
+        # Store inference mode
+        self.inference_mode = inference_mode
+        
         # Validate configuration
         self._validate_config()
     
@@ -170,8 +173,9 @@ class Config:
         # Validate data splits
         self.data_splits.validate_splits()
         
-        # Validate data directory
-        self._validate_data_directory()
+        # Validate data directory only if not in inference mode
+        if not self.inference_mode:
+            self._validate_data_directory()
     
     def _validate_data_directory(self):
         """Validate that data directory exists and has required structure."""
@@ -250,7 +254,8 @@ class Config:
         # Create new config with basic parameters
         config = cls(
             data_dir=config_dict['data_directory'],
-            output_dir=None  # Will use default
+            output_dir=None,  # Will use default
+            inference_mode=True  # Skip validation when loading
         )
         
         # Override with saved values

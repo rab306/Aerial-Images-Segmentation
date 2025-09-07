@@ -3,6 +3,8 @@ import cv2
 from pathlib import Path
 from typing import List, Union, Optional, Dict, Any, Tuple
 from PIL import Image
+import matplotlib.pyplot as plt
+
 import tensorflow as tf
 from tensorflow import keras
 
@@ -104,8 +106,8 @@ class ModelPredictor:
         return full_prediction
     
     def predict_batch(self, image_paths: List[str], output_dir: str, 
-                     overlap_ratio: float = 0.1, save_confidence: bool = False,
-                     save_visualizations: bool = False) -> List[Dict[str, Any]]:
+                 overlap_ratio: float = 0.1, save_confidence: bool = False,
+                 save_visualizations: bool = False, comprehensive_viz: bool = True) -> List[Dict[str, Any]]:
         """
         Predict segmentation masks for multiple images.
         
@@ -115,6 +117,7 @@ class ModelPredictor:
             overlap_ratio: Overlap ratio for patches
             save_confidence: Whether to save confidence maps
             save_visualizations: Whether to save visualization overlays
+            comprehensive_viz: Whether to use comprehensive 3-panel visualization
             
         Returns:
             List of prediction results
@@ -153,9 +156,16 @@ class ModelPredictor:
                 
                 # Save visualizations if requested
                 if save_visualizations:
-                    viz_file = output_path / f"{input_name}_overlay.png"
-                    self._save_visualization_overlay(image_path, prediction, str(viz_file))
-                    result['visualization_path'] = str(viz_file)
+                    if comprehensive_viz:
+                        # Use new comprehensive visualization
+                        viz_file = output_path / f"{input_name}_comprehensive.png"
+                        self.save_comprehensive_visualization(image_path, prediction, str(viz_file))
+                        result['comprehensive_viz_path'] = str(viz_file)
+                    else:
+                        # Use simple overlay
+                        viz_file = output_path / f"{input_name}_overlay.png"
+                        self._save_visualization_overlay(image_path, prediction, str(viz_file))
+                        result['visualization_path'] = str(viz_file)
                 
                 results.append(result)
                 
@@ -265,7 +275,93 @@ class ModelPredictor:
         final_prediction = prediction_sum / weight_sum[..., np.newaxis]
         
         return final_prediction
-    
+
+    def save_comprehensive_visualization(self, original_image_path: str, prediction: np.ndarray, 
+                                    output_path: str):
+        """
+        Save comprehensive visualization with original image, prediction mask, and overlay.
+        
+        Args:
+            original_image_path: Path to original input image
+            prediction: Model prediction (H, W, num_classes)
+            output_path: Path to save the visualization
+        """
+        # Load original image
+        original = self._load_image(original_image_path)
+        
+        # Convert prediction to class indices and apply colors
+        class_pred = np.argmax(prediction, axis=-1)
+        colored_pred = self._apply_class_colors(class_pred)
+        
+        # Resize prediction to match original if needed
+        if colored_pred.shape[:2] != original.shape[:2]:
+            colored_pred = cv2.resize(
+                colored_pred, 
+                (original.shape[1], original.shape[0]),
+                interpolation=cv2.INTER_NEAREST
+            )
+        
+        # Create overlay (60% original, 40% prediction)
+        overlay = cv2.addWeighted(original, 0.6, colored_pred, 0.4, 0)
+        
+        # Create matplotlib figure with 3 subplots
+        fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+        
+        # Original image
+        axes[0].imshow(original)
+        axes[0].set_title('Original Image', fontsize=14, fontweight='bold')
+        axes[0].axis('off')
+        
+        # Prediction mask
+        axes[1].imshow(colored_pred)
+        axes[1].set_title('Prediction Mask', fontsize=14, fontweight='bold')
+        axes[1].axis('off')
+        
+        # Overlay
+        axes[2].imshow(overlay)
+        axes[2].set_title('Overlay (Original + Prediction)', fontsize=14, fontweight='bold')
+        axes[2].axis('off')
+        
+        # Add class legend
+        self._add_class_legend(fig)
+        
+        # Adjust layout and save
+        plt.tight_layout()
+        plt.savefig(output_path, dpi=300, bbox_inches='tight', facecolor='white')
+        plt.close()
+        
+        print(f"Comprehensive visualization saved: {output_path}")
+
+    def _add_class_legend(self, fig):
+        """Add class color legend to the figure."""
+        class_colors = [
+            [60, 16, 152],    # Building - Purple
+            [132, 41, 246],   # Land - Light Purple  
+            [110, 193, 228],  # Road - Light Blue
+            [254, 221, 58],   # Vegetation - Yellow
+            [226, 169, 41],   # Water - Orange
+            [155, 155, 155],  # Unlabeled - Gray
+        ]
+        
+        class_names = self.config.get_class_names()
+        
+        # Normalize colors to [0,1] for matplotlib
+        colors_normalized = [[c/255.0 for c in color] for color in class_colors]
+        
+        # Create legend patches
+        legend_elements = []
+        for i, (name, color) in enumerate(zip(class_names, colors_normalized)):
+            if i < len(colors_normalized):
+                legend_elements.append(
+                    plt.Rectangle((0, 0), 1, 1, facecolor=color, edgecolor='black', linewidth=0.5)
+                )
+        
+        # Add legend to the figure
+        fig.legend(legend_elements, class_names, 
+                loc='center', bbox_to_anchor=(0.5, 0.02), 
+                ncol=len(class_names), fontsize=10,
+                title='Class Legend', title_fontsize=12)
+
     def save_class_prediction(self, prediction: np.ndarray, output_path: str):
         """Save prediction as colored class image."""
         # Convert to class indices
@@ -277,17 +373,17 @@ class ModelPredictor:
         # Save as PNG
         Image.fromarray(colored_prediction).save(output_path)
         print(f"Class prediction saved: {output_path}")
-    
+
     def _apply_class_colors(self, class_prediction: np.ndarray) -> np.ndarray:
         """Apply class colors to prediction mask."""
-        # Define colors for each class (RGB)
+        # Define colors for each class (RGB) - matching dataset colors
         class_colors = [
-            [60, 16, 152],    # Building - Purple
-            [132, 41, 246],   # Land - Light Purple  
-            [110, 193, 228],  # Road - Light Blue
-            [254, 221, 58],   # Vegetation - Yellow
-            [226, 169, 41],   # Water - Orange
-            [155, 155, 155],  # Unlabeled - Gray
+            [60, 16, 152],    # Building - Purple (#3C1098)
+            [132, 41, 246],   # Land - Light Purple (#8429F6)
+            [110, 193, 228],  # Road - Light Blue (#6EC1E4)
+            [254, 221, 58],   # Vegetation - Yellow (#FEDD3A)
+            [226, 169, 41],   # Water - Orange (#E2A929)
+            [155, 155, 155],  # Unlabeled - Gray (#9B9B9B)
         ]
         
         h, w = class_prediction.shape
@@ -299,10 +395,11 @@ class ModelPredictor:
                 colored[mask] = color
         
         return colored
-    
+
+    # Keep the old overlay function for backward compatibility
     def _save_visualization_overlay(self, original_image_path: str, 
-                                   prediction: np.ndarray, output_path: str):
-        """Save visualization overlay of original image and prediction."""
+                                prediction: np.ndarray, output_path: str):
+        """Save simple visualization overlay of original image and prediction."""
         # Load original image
         original = self._load_image(original_image_path)
         

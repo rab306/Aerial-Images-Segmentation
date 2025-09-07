@@ -67,7 +67,12 @@ def parse_arguments():
         action='store_true',
         help='Save visualization overlays of original + prediction'
     )
-    
+    parser.add_argument(
+        '--comprehensive_viz',
+        action='store_true',
+        help='Use comprehensive 3-panel visualization (original, mask, overlay) instead of simple overlay'
+    )
+
     # Processing options
     parser.add_argument(
         '--extensions',
@@ -142,7 +147,7 @@ def main():
         output_path.mkdir(parents=True, exist_ok=True)
         
         # Create configuration (minimal for inference)
-        config = Config()
+        config = Config(inference_mode=True)
         config.patch_size = args.patch_size
         
         # Load model and create predictor
@@ -202,7 +207,13 @@ def main():
                     np.save(confidence_file, prediction)
                     print(f"Confidence map saved: {confidence_file}")
                 
-                if args.save_visualizations:
+                if args.comprehensive_viz:
+                    # Use comprehensive visualization
+                    viz_file = output_path / f"{Path(image_path).stem}_comprehensive.png"
+                    predictor.save_comprehensive_visualization(image_path, prediction, str(viz_file))
+                    print(f"Comprehensive visualization saved: {viz_file}")
+                else:
+                    # Use simple overlay
                     viz_file = output_path / f"{Path(image_path).stem}_overlay.png"
                     predictor._save_visualization_overlay(image_path, prediction, str(viz_file))
                 
@@ -224,7 +235,8 @@ def main():
                 str(output_path),
                 overlap_ratio=args.overlap_ratio,
                 save_confidence=args.save_confidence,
-                save_visualizations=args.save_visualizations
+                save_visualizations=args.save_visualizations,
+                comprehensive_viz=args.comprehensive_viz  # Add this line
             )
         
         processing_time = time.time() - processing_start

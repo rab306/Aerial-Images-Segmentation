@@ -11,10 +11,10 @@ seg-venv
 .ipynb_checkpoints/
 
 # Data files
-*results/
 data/
 requirements-full.txt
 
 # Any other files you might want to ignore
 *.log
 *.tmp
+*.h5

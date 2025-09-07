@@ -3,6 +3,7 @@
 A deep learning project for semantic segmentation of aerial imagery using U-Net architecture. This system can classify aerial images into 6 categories: Building, Land, Road, Vegetation, Water, and Unlabeled areas.
 
 ## Table of Contents
+- [Dataset](#dataset)
 - [Features](#features)
 - [Project Structure](#project-structure)
 - [Installation](#installation)
@@ -13,6 +14,36 @@ A deep learning project for semantic segmentation of aerial imagery using U-Net 
 - [Inference](#inference)
 - [Configuration](#configuration)
 - [Results](#results)
+
+## Dataset
+
+This project uses the **Semantic Segmentation of Aerial Imagery** dataset from Kaggle, featuring high-resolution satellite imagery of Dubai, UAE.
+
+### Dataset Details
+- **Source**: Mohammed Bin Rashid Space Center (MBRSC) satellites
+- **Location**: Dubai, UAE
+- **Total Images**: 72 images organized into 8 tiles
+- **Annotations**: Pixel-wise semantic segmentation labels
+- **Classes**: 6 semantic classes with specific color coding
+
+### Class Definitions
+| Class | Color Code | Description |
+|-------|------------|-------------|
+| Building | #3C1098 | Urban structures and buildings |
+| Land | #8429F6 | Unpaved areas and bare land |
+| Road | #6EC1E4 | Roads and paved surfaces |
+| Vegetation | #FEDD3A | Trees, grass, and plant life |
+| Water | #E2A929 | Water bodies and aquatic areas |
+| Unlabeled | #9B9B9B | Unclassified regions |
+
+### Data Splits
+- **Training**: 49 samples (70%)
+- **Validation**: 15 samples (20%)
+- **Test**: 8 samples (10%)
+
+### Download
+Dataset available on Kaggle: [[Semantic Segmentation of Aerial Imagery](https://www.kaggle.com/datasets/humansintheloop/semantic-segmentation-of-aerial-imagery/data)]
+
 
 ## Features
 
@@ -273,20 +304,19 @@ All outputs are organized into structured directories:
 ## Results
 
 ### Training Performance
-- **Epochs**: 
-- **Validation Jaccard**: 
-- **Test Performance**: 
-- **Processing Speed**: 
+- **Epochs**: 200
+- **Best Validation Jaccard**: 0.7879
+- **Test Performance**: Accuracy: 0.8673, Jaccard Score: 0.7746
 
 ### Per-Class Performance (Example)
-| Class       | F1 Score | Notes                    |
-|-------------|----------|--------------------------|
-| Land        |    -     |                          |
-| Water       |    -     |                          |
-| Building    |    -     |                          |
-| Road        |    -     |                          |
-| Vegetation  |    -     |                          |
-| Unlabeled   |    -     |                          |
+| Class       | F1 Score | Notes                                       |
+|-------------|----------|---------------------------------------------|
+| Land        | 0.9265   |Large homogeneous regions, easy to classify  |
+| Water       | 0.8644   |Significant improvement from initial 0.06    |
+| Building    | 0.8403   |Clear boundaries, distinct spectral signature|
+| Road        | 0.7287   |Improved substantially from initial 0.006    |
+| Vegetation  | 0.4552   |Linear features still challenging            |
+| Unlabeled   | 0.0000   |Rare class, insufficient training examples   |
 
 
 ## License
